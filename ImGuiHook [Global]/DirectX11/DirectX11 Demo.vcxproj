@@ -37,11 +37,13 @@
     <ClInclude Include="..\Global.h" />
     <ClInclude Include="DirectX11.h" />
     <ClInclude Include="DirectX11Demo.h" />
+    <ClInclude Include="Drawing.h" />
     <ClInclude Include="HookFunctions.h" />
     <ClInclude Include="Hooks.h" />
     <ClInclude Include="include.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="Vector.h" />
+    <ClInclude Include="WorldToScreen.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Directories\ImGui\imgui.cpp" />
@@ -57,7 +59,9 @@
     <ClCompile Include="..\Directories\MinHook\Src\hook.c" />
     <ClCompile Include="..\Directories\MinHook\Src\trampoline.c" />
     <ClCompile Include="DirectX11Demo.cpp" />
+    <ClCompile Include="Drawing.cpp" />
     <ClCompile Include="HookFunctions.cpp" />
+    <ClCompile Include="WorldToScreen.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

@@ -38,13 +38,18 @@ void Colors() {
 //"F3 0F ? ? ? F3 0F ? ? ? F3 0F ? ? ? F3 0F ? ? ? F3 0F ? ? ? ? F3 0F ? ? ? A1"
 
 DWORD WINAPI InitiateHooks(HMODULE hMod) {
-	char modulename[] = "plutonium-bootstrapper-win32.exe";
-	char sig[] = "\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\x00\xF3\x0F\x00\x00\x00\xA1";
-	char mask[] = "xx???xx???xx???xx???xx????xx???x";
-	HookAddr = FindPattern(modulename, sig, mask);
-	int hooklength = 15;
-	jmpback = HookAddr + hooklength;
-	Hook((BYTE*)HookAddr, (BYTE*)GetEnts, hooklength);
+	while (!hooked) {
+		char modulename[] = "plutonium-bootstrapper-win32.exe";
+		char sig[] = "\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\x00\xF3\x0F\x00\x00\x00\xA1";
+		char mask[] = "xx???xx???xx???xx???xx????xx???x";
+		HookAddr = FindPattern(modulename, sig, mask);
+		int hooklength = 15;
+		jmpback = HookAddr + hooklength;
+		if (HookAddr != NULL) {
+			Hook((BYTE*)HookAddr, (BYTE*)GetEnts, hooklength);
+			hooked = true;
+		}
+	}
 	while (!GetAsyncKeyState(VK_DELETE)) {
 		Sleep(500);
 	}
@@ -131,7 +136,7 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 	}
 	if (GetAsyncKeyState(VK_INSERT) & 1) ShowMenu = !ShowMenu;
 	Colors();
-	ImGui_ImplDX11_NewFrame();
+	ImGui_ImplDX11_NewFrame();//0044219A
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 	ImGui::GetIO().MouseDrawCursor = ShowMenu;
@@ -168,6 +173,19 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 		}
 		ImGui::EndChild();
 		ImGui::End();
+	}
+	if (hooked) {
+		if (UserSettings.ESP) {
+			for (int i = 0; i < 254; i++) {
+				if (ents[i] != 0) {
+					Vector3 pos = ents[i]->Pos;
+					Vector2 Posscreen = PosToScreen(pos);
+					if (Posscreen.x > 0 && Posscreen.y > 0 && Posscreen.x < 1920 && Posscreen.y < 1080) {
+						DrawLine({ 1920 / 2, 1080 }, Posscreen, ImColor(155, 155, 155), 1);
+					}
+				}
+			}
+		}
 	}
 	ImGui::EndFrame();
 	ImGui::Render();

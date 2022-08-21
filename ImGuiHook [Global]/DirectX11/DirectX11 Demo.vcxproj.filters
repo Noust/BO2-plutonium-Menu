@@ -77,6 +77,8 @@
     <ClInclude Include="Hooks.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="Vector.h" />
+    <ClInclude Include="WorldToScreen.h" />
+    <ClInclude Include="Drawing.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Directories\MinHook\Src\buffer.c">
@@ -119,5 +121,7 @@
       <Filter>ImGui</Filter>
     </ClCompile>
     <ClCompile Include="HookFunctions.cpp" />
+    <ClCompile Include="WorldToScreen.cpp" />
+    <ClCompile Include="Drawing.cpp" />
   </ItemGroup>
 </Project>

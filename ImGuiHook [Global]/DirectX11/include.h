@@ -15,3 +15,5 @@
 #include "HookFunctions.h"
 #include "Hooks.h"
 #include "Settings.h"
+#include "WorldToScreen.h"
+#include "Drawing.h"
