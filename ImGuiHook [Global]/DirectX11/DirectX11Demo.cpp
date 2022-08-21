@@ -3,6 +3,7 @@
 bool ShowMenu = false;
 bool ImGui_Initialised = false;
 bool alreadyther = false;
+char Distances[50];
 
 void Colors() {
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -37,16 +38,26 @@ void Colors() {
 //"\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\x00\xF3\x0F\x00\x00\x00\xA1", "xx???xx???xx???xx???xx????xx???x"
 //"F3 0F ? ? ? F3 0F ? ? ? F3 0F ? ? ? F3 0F ? ? ? F3 0F ? ? ? ? F3 0F ? ? ? A1"
 
+//Address of signature = plutonium - bootstrapper - win32.exe + 0x003953E5
+//"\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\x00\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\x00\xF3\x0F\x00\x00\x00\x00\x00\x00\xF3\x0F\x00\x00\x00\x00\xF3\x0F\x00\x00\x00\x00\x00\x00\xF3\x0F", "xx???xx????xx???xx???xx????xx??????xx????xx??????xx"
+//"F3 0F ? ? ? F3 0F ? ? ? ? F3 0F ? ? ? F3 0F ? ? ? F3 0F ? ? ? ? F3 0F ? ? ? ? ? ? F3 0F ? ? ? ? F3 0F ? ? ? ? ? ? F3 0F"
+
 DWORD WINAPI InitiateHooks(HMODULE hMod) {
 	while (!hooked) {
 		char modulename[] = "plutonium-bootstrapper-win32.exe";
 		char sig[] = "\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\x00\xF3\x0F\x00\x00\x00\xA1";
 		char mask[] = "xx???xx???xx???xx???xx????xx???x";
+		char sig1[] = "\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\x00\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\x00\xF3\x0F\x00\x00\x00\x00\x00\x00\xF3\x0F\x00\x00\x00\x00\xF3\x0F\x00\x00\x00\x00\x00\x00\xF3\x0F";
+		char mask1[] = "xx???xx????xx???xx???xx????xx??????xx????xx??????xx";
 		HookAddr = FindPattern(modulename, sig, mask);
+		HookAddr1 = FindPattern(modulename, sig1, mask1);
 		int hooklength = 15;
+		int hooklength1 = 16;
 		jmpback = HookAddr + hooklength;
-		if (HookAddr != NULL) {
+		jmpback1 = HookAddr1 + hooklength1;
+		if (HookAddr != NULL && HookAddr1 != NULL) {
 			Hook((BYTE*)HookAddr, (BYTE*)GetEnts, hooklength);
+			Hook((BYTE*)HookAddr1, (BYTE*)GetLocal, hooklength1);
 			hooked = true;
 		}
 	}
@@ -73,7 +84,9 @@ DWORD WINAPI SetEntities(HMODULE hMod) {
 				}
 			}
 		}
-		Sleep(10);
+		if (localAddr != NULL)
+			local = (Entity*)(localAddr);
+		Sleep(1);
 	}
 	FreeLibraryAndExitThread(hMod, 0);
 }
@@ -164,6 +177,13 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 				ImGui::SliderInt("Box Thickness", &UserSettings.bocthickness, 0, 10);
 				ImGui::Separator();
 			}
+			ImGui::Checkbox("Distance ESP", &UserSettings.DistanceEsp);
+			if (UserSettings.DistanceEsp) {
+				ImGui::ColorEdit4("Enemies Distance Color", (float*)(&UserSettings.EnemyDistColor));
+				ImGui::ColorEdit4("Team Distance Color", (float*)(&UserSettings.PlayerDistColor));
+				ImGui::Separator();
+			}
+			ImGui::SliderFloat("ESP Distance", &UserSettings.EspDistance, 1, 80);
 		}
 		if (UserSettings.MenuWindow == 1) {
 
@@ -175,13 +195,30 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 		ImGui::End();
 	}
 	if (hooked) {
-		if (UserSettings.ESP) {
+		if (UserSettings.ESP || UserSettings.DistanceEsp) {
 			for (int i = 0; i < 254; i++) {
-				if (ents[i] != 0) {
-					Vector3 pos = ents[i]->Pos;
-					Vector2 Posscreen = PosToScreen(pos);
-					if (Posscreen.x > 0 && Posscreen.y > 0 && Posscreen.x < 1920 && Posscreen.y < 1080) {
-						DrawLine({ 1920 / 2, 1080 }, Posscreen, ImColor(155, 155, 155), 1);
+				if (ents[i] != 0 && local != 0) {
+					Vector3 Lpos = local->Pos;
+					if (ents[i]->Check1 != 0) {
+						Vector3 pos = ents[i]->Pos;
+						if ((Lpos.Distance(pos) / 100) > 0.8 && (Lpos.Distance(pos) / 100) < UserSettings.EspDistance) {
+							Vector3 pos1 = ents[i]->Pos;
+							pos1.z += 64;
+							Vector2 Posscreen = PosToScreen(pos);
+							Vector2 Posscreen1 = PosToScreen(pos1);
+							float heigth = Posscreen.y - Posscreen1.y;
+							if (UserSettings.ESP) {
+								if (Posscreen.x > 0 && Posscreen.y > 0 && Posscreen.x < 1920 && Posscreen.y < 1080) {
+									DrawRect(Posscreen, heigth, heigth * UserSettings.boxWidth, UserSettings.bocthickness, UserSettings.EnemyBoxColor);
+								}
+							}
+							if (UserSettings.DistanceEsp) {
+								sprintf_s(Distances, 50, "[%0.fm]", Lpos.Distance(pos) / 100);
+								if (Posscreen.x > 0 && Posscreen.y > 0 && Posscreen.x < 1920 && Posscreen.y < 1080) {
+									DrawChar(Posscreen1, Distances, UserSettings.EnemyDistColor, 1);
+								}
+							}
+						}
 					}
 				}
 			}
@@ -236,6 +273,7 @@ DWORD WINAPI MainThread(HMODULE hMod) {
 		Sleep(500);
 	}
 	Patch((BYTE*)HookAddr, (BYTE*)"\xF3\x0F\x10\x50\x04\xF3\x0F\x11\x04\x24\xF3\x0F\x10\x40\x08", 15);
+	Patch((BYTE*)HookAddr1, (BYTE*)"\xF3\x0F\x5C\x43\x04\xF3\x0F\x11\x44\x24\x18\xF3\x0F\x10\x47\x34", 16);
 	ShowMenu = false;
 	Sleep(10);
 	DisableAll();
