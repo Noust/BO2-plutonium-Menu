@@ -201,7 +201,7 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 					Vector3 Lpos = local->Pos;
 					if (ents[i]->Check1 != 0) {
 						Vector3 pos = ents[i]->Pos;
-						if ((Lpos.Distance(pos) / 100) > 0.8 && (Lpos.Distance(pos) / 100) < UserSettings.EspDistance) {
+						if ((Lpos.Distance(pos) / 100) > 0.8f && (Lpos.Distance(pos) / 100) < UserSettings.EspDistance) {
 							Vector3 pos1 = ents[i]->Pos;
 							pos1.z += 64;
 							Vector2 Posscreen = PosToScreen(pos);
