@@ -4,6 +4,7 @@ bool ShowMenu = false;
 bool ImGui_Initialised = false;
 bool alreadyther = false;
 char Distances[50];
+Vector2 SnapLineBegin = { 1920 / 2,1080 };
 
 void Colors() {
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -169,6 +170,42 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 		ImGui::SameLine();
 		ImGui::BeginChild("##rigth", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y), true);
 		if (UserSettings.MenuWindow == 0) {
+			ImGui::Checkbox("Snap Line Esp", &UserSettings.SnapLine);
+			if (UserSettings.SnapLine) {
+				ImGui::ColorEdit4("Enemy Snap Color", (float*)(&UserSettings.EnemySnapColor));
+				ImGui::ColorEdit4("Team Snap Color", (float*)(&UserSettings.PlayerSnapColor));
+				ImGui::SliderInt("Snap thickness", &UserSettings.ThicknessSnap, 0, 10);
+				ImGui::Spacing();
+				ImGui::Spacing();
+				ImGui::Text("Snap Line begin place");
+				if (ImGui::Button("Bottom Center")) {
+					SnapLineBegin = { 1920 / 2,1080 };
+				}
+				if (ImGui::Button("Center")) {
+					SnapLineBegin = { 1920 / 2,1080 / 2 };
+				}
+				if (ImGui::Button("Top Center")) {
+					SnapLineBegin = { 1920 / 2,0 };
+				}
+				if (ImGui::Button("Center Right")) {
+					SnapLineBegin = { 1920,1080 / 2 };
+				}
+				if (ImGui::Button("Center Left")) {
+					SnapLineBegin = { 0,1080 / 2 };
+				}
+				ImGui::Spacing();
+				ImGui::Spacing();
+				ImGui::Text("Snap Line end place");
+				if (ImGui::Button("Top")) {
+					UserSettings.bottom = false;
+					UserSettings.top = true;
+				}
+				if (ImGui::Button("Bottom")) {
+					UserSettings.bottom = true;
+					UserSettings.top = false;
+				}
+				ImGui::Separator();
+			}
 			ImGui::Checkbox("Box ESP", &UserSettings.ESP);
 			if (UserSettings.ESP) {
 				ImGui::ColorEdit4("Enemies Box Color", (float*)(&UserSettings.EnemyBoxColor));
@@ -183,6 +220,13 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 				ImGui::ColorEdit4("Team Distance Color", (float*)(&UserSettings.PlayerDistColor));
 				ImGui::Separator();
 			}
+			ImGui::Checkbox("3D Box ESP", &UserSettings.ESP3d);
+			if (UserSettings.ESP3d) {
+				ImGui::ColorEdit4("Enemies 3D Box Color", (float*)(&UserSettings.Enemy3dColor));
+				ImGui::ColorEdit4("Team 3D Box Color", (float*)(&UserSettings.Player3dColor));
+				ImGui::SliderInt("3D Box Thickness", &UserSettings.box3dthickness, 0, 10);
+				ImGui::Separator();
+			}
 			ImGui::SliderFloat("ESP Distance", &UserSettings.EspDistance, 1, 80);
 		}
 		if (UserSettings.MenuWindow == 1) {
@@ -195,7 +239,7 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 		ImGui::End();
 	}
 	if (hooked) {
-		if (UserSettings.ESP || UserSettings.DistanceEsp) {
+		if (UserSettings.ESP || UserSettings.DistanceEsp || UserSettings.ESP3d || UserSettings.SnapLine) {
 			for (int i = 0; i < 254; i++) {
 				if (ents[i] != 0 && local != 0) {
 					Vector3 Lpos = local->Pos;
@@ -204,12 +248,28 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 						if ((Lpos.Distance(pos) / 100) > 0.8f && (Lpos.Distance(pos) / 100) < UserSettings.EspDistance) {
 							Vector3 pos1 = ents[i]->Pos;
 							pos1.z += 64;
+							Vector3 pos2 = ents[i]->Pos;
+							if (UserSettings.top)
+								pos2.z += 64.0f;
+							if (UserSettings.bottom)
+								pos2.z += 0;
 							Vector2 Posscreen = PosToScreen(pos);
 							Vector2 Posscreen1 = PosToScreen(pos1);
+							Vector2 posscreen2 = PosToScreen(pos2);
 							float heigth = Posscreen.y - Posscreen1.y;
 							if (UserSettings.ESP) {
 								if (Posscreen.x > 0 && Posscreen.y > 0 && Posscreen.x < 1920 && Posscreen.y < 1080) {
 									DrawRect(Posscreen, heigth, heigth * UserSettings.boxWidth, UserSettings.bocthickness, UserSettings.EnemyBoxColor);
+								}
+							}
+							if (UserSettings.ESP3d) {
+								if (Posscreen.x > 0 && Posscreen.y > 0 && Posscreen.x < 1920 && Posscreen.y < 1080) {
+									Draw3dBoxes(i, UserSettings.Enemy3dColor, UserSettings.box3dthickness);
+								}
+							}
+							if (UserSettings.SnapLine) {
+								if (posscreen2.x > 0 && posscreen2.y > 0 && posscreen2.x < 1920 && posscreen2.y < 1080) {
+									DrawLine(SnapLineBegin, posscreen2, UserSettings.EnemySnapColor, UserSettings.ThicknessSnap);
 								}
 							}
 							if (UserSettings.DistanceEsp) {
