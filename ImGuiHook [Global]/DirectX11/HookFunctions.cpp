@@ -7,28 +7,24 @@ void Patch(BYTE* addr, BYTE* bytes, unsigned int size) {
 	VirtualProtect(addr, size, oProc, &oProc);
 }
 
-bool Hook(BYTE* pTarget, BYTE* pHook, UINT Length)
+bool Hook(void* src, void* dst, int len)
 {
-	if (!pTarget || !pHook || Length < 14)
+	if (len < 5) return false;
 
-		return false;
+	DWORD curProtection;
+	VirtualProtect(src, len, PAGE_EXECUTE_READWRITE, &curProtection);
 
-	DWORD dwOld = 0;
-	if (!VirtualProtect(pTarget, Length, PAGE_EXECUTE_READWRITE, &dwOld))
-		return false;
-	memset(pTarget, 0x90, Length);
+	memset(src, 0x90, len);
 
-#ifdef _WIN64
-	memset(pTarget, 0x00, 14);
-	*(pTarget + 0x00) = 0xFF;
-	*(pTarget + 0x01) = 0x25;
-	*reinterpret_cast<BYTE**>(pTarget + 0x06) = pHook;
-#else
-	* pTarget = 0xE9;
-	*reinterpret_cast<DWORD*>(pTarget + 0x01) = pHook - pTarget - 5;
-#endif
-	VirtualProtect(pTarget, Length, dwOld, &dwOld);
-	return false;
+	uintptr_t relativeAddress = ((uintptr_t)dst - (uintptr_t)src) - 5;
+
+	*(BYTE*)src = 0xE9;
+	*(uintptr_t*)((uintptr_t)src + 1) = relativeAddress;
+
+	DWORD temp;
+	VirtualProtect(src, len, curProtection, &temp);
+
+	return true;
 }
 
 MODULEINFO GetModuleInfo(char* szModule)

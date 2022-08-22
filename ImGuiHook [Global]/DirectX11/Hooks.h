@@ -28,8 +28,6 @@ __declspec(naked) void GetEnts() {
 	__asm {
 		mov[entsptr], eax
 		movss xmm2, [eax + 0x04]
-		movss[esp], xmm0
-		movss xmm0, [eax + 0x08]
 		jmp[jmpback]
 	}
 }
@@ -38,8 +36,6 @@ __declspec(naked) void GetLocal() {
 	__asm {
 		mov[localAddr], ebx
 		subss xmm0, [ebx + 0x04]
-		movss[esp + 0x18], xmm0
-		movss xmm0, [edi + 0x34]
 		jmp[jmpback1]
 	}
 }

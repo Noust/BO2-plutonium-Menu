@@ -73,13 +73,13 @@ DWORD WINAPI InitiateHooks(HMODULE hMod) {
 		char mask1[] = "xx???xx????xx???xx???xx????xx??????xx????xx??????xx";
 		HookAddr = FindPattern(modulename, sig, mask);
 		HookAddr1 = FindPattern(modulename, sig1, mask1);
-		int hooklength = 15;
-		int hooklength1 = 16;
+		int hooklength = 5;
+		int hooklength1 = 5;
 		jmpback = HookAddr + hooklength;
 		jmpback1 = HookAddr1 + hooklength1;
 		if (HookAddr != NULL && HookAddr1 != NULL) {
-			Hook((BYTE*)HookAddr, (BYTE*)GetEnts, hooklength);
-			Hook((BYTE*)HookAddr1, (BYTE*)GetLocal, hooklength1);
+			Hook((void*)HookAddr, GetEnts, hooklength);
+			Hook((void*)HookAddr1, GetLocal, hooklength1);
 			hooked = true;
 		}
 	}
@@ -88,6 +88,28 @@ DWORD WINAPI InitiateHooks(HMODULE hMod) {
 			closest = FindClosestEnemy();
 		}
 		Sleep(1);
+	}
+	FreeLibraryAndExitThread(hMod, 0);
+}
+
+DWORD WINAPI Aimbot(HMODULE hMod) {
+	while (!GetAsyncKeyState(VK_DELETE)) {
+		if (UserSettings.Aimbot) {
+			if (GetAsyncKeyState(VK_RBUTTON)) {
+				if (ents[closest] != 0 && local != 0) {
+					float Distance = local->Pos.Distance(ents[closest]->Pos) / 100;
+					if (Distance < UserSettings.EspDistance && Distance > 0.9f && ents[closest]->Check1 != 0) {
+						Vector3 pos = ents[closest]->Pos;
+						pos.z += 57;
+						Vector2 AimbottargetScreen = PosToScreen(pos);
+						if (AimbottargetScreen.Distance({ 1920 / 2, 1080 / 2 }) < UserSettings.AimbotFov) {
+							SetCursorPos(AimbottargetScreen.x, AimbottargetScreen.y);
+						}
+					}
+				}
+			}
+		}
+		Sleep(UserSettings.AimbotSleep);
 	}
 	FreeLibraryAndExitThread(hMod, 0);
 }
@@ -343,7 +365,7 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 					float Distance = local->Pos.Distance(ents[closest]->Pos) / 100;
 					if (Distance < UserSettings.EspDistance && Distance > 0.9f && ents[closest]->Check1 != 0) {
 						Vector3 pos = ents[closest]->Pos;
-						pos.z += 60;
+						pos.z += 57;
 						Vector2 AimbottargetScreen = PosToScreen(pos);
 						if (AimbottargetScreen.Distance({ 1920 / 2, 1080 / 2 }) < UserSettings.AimbotFov) {
 							DrawLine({ 1920 / 2, 1080 / 2 }, AimbottargetScreen, UserSettings.TargetColor, UserSettings.TargetThickness);
@@ -401,8 +423,8 @@ DWORD WINAPI MainThread(HMODULE hMod) {
 	while (!GetAsyncKeyState(VK_DELETE)) {
 		Sleep(500);
 	}
-	Patch((BYTE*)HookAddr, (BYTE*)"\xF3\x0F\x10\x50\x04\xF3\x0F\x11\x04\x24\xF3\x0F\x10\x40\x08", 15);
-	Patch((BYTE*)HookAddr1, (BYTE*)"\xF3\x0F\x5C\x43\x04\xF3\x0F\x11\x44\x24\x18\xF3\x0F\x10\x47\x34", 16);
+	Patch((BYTE*)HookAddr, (BYTE*)"\xF3\x0F\x10\x50\x04", 5);
+	Patch((BYTE*)HookAddr1, (BYTE*)"\xF3\x0F\x5C\x43\x04", 5);
 	ShowMenu = false;
 	Sleep(10);
 	DisableAll();
@@ -423,6 +445,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			StartThread(hModule, (LPTHREAD_START_ROUTINE)MainThread);
 			StartThread(hModule, (LPTHREAD_START_ROUTINE)InitiateHooks);
 			StartThread(hModule, (LPTHREAD_START_ROUTINE)SetEntities);
+			StartThread(hModule, (LPTHREAD_START_ROUTINE)Aimbot);
 		}
 		break;
 	default:

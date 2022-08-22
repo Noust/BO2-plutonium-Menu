@@ -42,5 +42,5 @@ public:
 	bool ShowTarget = false;
 	int TargetThickness = 0;
 	ImColor TargetColor = { 255,0,0 };
-	int AimbotSleep = 16;
+	int AimbotSleep = 2;
 }UserSettings;
