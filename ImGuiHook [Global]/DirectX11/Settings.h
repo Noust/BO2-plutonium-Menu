@@ -12,6 +12,11 @@ public:
 	int bocthickness = 0;
 	float boxWidth = 0.5f;
 
+	bool FilledESP = false;
+	ImColor EnemyFilledColor = { 0,0,0,80 };
+	ImColor PlayerFilledColor = { 0,0,0,80 };
+	float FilledWidth = 0.5f;
+
 	bool SnapLine = false;
 	int ThicknessSnap = 0;
 	ImColor EnemySnapColor = { 255,0,0 };
@@ -30,4 +35,12 @@ public:
 
 	float EspDistance = 50.0f;
 	bool Aimbot = false;
+	int AimbotFov = 1920;
+	bool ShowFov = false;
+	int FovThickness = 0;
+	ImColor FovColor = { 255,255,255 };
+	bool ShowTarget = false;
+	int TargetThickness = 0;
+	ImColor TargetColor = { 255,0,0 };
+	int AimbotSleep = 16;
 }UserSettings;

@@ -68,3 +68,9 @@ void Draw3dBoxes(int index, ImColor color, int thickness) {
 	DrawLine(posscreen6, posscreen7, color, thickness);
 	DrawLine(posscreen7, posscreen4, color, thickness);
 }
+void DrawFilledRect(Vector2 pos, float heigth, float Width, ImColor color) {
+	ImGui::GetBackgroundDrawList()->AddRectFilled(ImVec2(pos.x - Width / 2, pos.y), ImVec2(pos.x + Width / 2, pos.y - heigth), color, 0);
+}
+void DrawCircle(Vector2 pos, ImColor color, float radius, int thickness) {
+	ImGui::GetBackgroundDrawList()->AddCircle(ImVec2(pos.x, pos.y), radius, color, 0, thickness);
+}

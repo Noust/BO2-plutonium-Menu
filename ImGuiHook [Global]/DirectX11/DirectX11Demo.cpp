@@ -5,6 +5,7 @@ bool ImGui_Initialised = false;
 bool alreadyther = false;
 char Distances[50];
 Vector2 SnapLineBegin = { 1920 / 2,1080 };
+int closest;
 
 void Colors() {
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -20,7 +21,7 @@ void Colors() {
 	style.ScrollbarSize = 14.0f;
 	style.GrabMinSize = 5.0f;
 	style.GrabRounding = 3.0f;
-	style.WindowMinSize = ImVec2(575, 346);
+	style.WindowMinSize = ImVec2(784, 377);
 	style.WindowTitleAlign = { 0.5,0.5f };
 
 	style.Colors[ImGuiCol_TitleBg] = ImColor(87, 35, 100);
@@ -42,6 +43,26 @@ void Colors() {
 //Address of signature = plutonium - bootstrapper - win32.exe + 0x003953E5
 //"\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\x00\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\xF3\x0F\x00\x00\x00\x00\xF3\x0F\x00\x00\x00\x00\x00\x00\xF3\x0F\x00\x00\x00\x00\xF3\x0F\x00\x00\x00\x00\x00\x00\xF3\x0F", "xx???xx????xx???xx???xx????xx??????xx????xx??????xx"
 //"F3 0F ? ? ? F3 0F ? ? ? ? F3 0F ? ? ? F3 0F ? ? ? F3 0F ? ? ? ? F3 0F ? ? ? ? ? ? F3 0F ? ? ? ? F3 0F ? ? ? ? ? ? F3 0F"
+int FindClosestEnemy() {
+	int closestentity = 0;
+	float Finish;
+	float Closest = FLT_MAX;
+	for (int i = 0; i < 254; i++) {
+		if (ents[i] != 0 && local != 0) {
+			float Distance = local->Pos.Distance(ents[i]->Pos) / 100; if (Distance > UserSettings.EspDistance || Distance < 0.9f) continue;
+			float Check = ents[i]->Check1; if (Check == 0) continue;
+			Vector3 pos = ents[i]->Pos;
+			pos.z += 60;
+			Vector2 Posscreen = PosToScreen(pos);
+			Finish = Posscreen.Distance({ 1920 / 2, 1080 / 2 });
+			if (Finish < Closest) {
+				Closest = Finish;
+				closestentity = i;
+			}
+		}
+	}
+	return closestentity;
+}
 
 DWORD WINAPI InitiateHooks(HMODULE hMod) {
 	while (!hooked) {
@@ -63,7 +84,10 @@ DWORD WINAPI InitiateHooks(HMODULE hMod) {
 		}
 	}
 	while (!GetAsyncKeyState(VK_DELETE)) {
-		Sleep(500);
+		if (UserSettings.Aimbot) {
+			closest = FindClosestEnemy();
+		}
+		Sleep(1);
 	}
 	FreeLibraryAndExitThread(hMod, 0);
 }
@@ -227,10 +251,33 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 				ImGui::SliderInt("3D Box Thickness", &UserSettings.box3dthickness, 0, 10);
 				ImGui::Separator();
 			}
+			ImGui::Checkbox("Filled Box ESP", &UserSettings.FilledESP);
+			if (UserSettings.FilledESP) {
+				ImGui::ColorEdit4("Enemies Filled Box Color", (float*)(&UserSettings.EnemyFilledColor));
+				ImGui::ColorEdit4("Team Filled Box Color", (float*)(&UserSettings.PlayerFilledColor));
+				ImGui::SliderFloat("Filled Box Width", &UserSettings.FilledWidth, 0, 1);
+				ImGui::Separator();
+			}
 			ImGui::SliderFloat("ESP Distance", &UserSettings.EspDistance, 1, 80);
 		}
 		if (UserSettings.MenuWindow == 1) {
-
+			ImGui::Checkbox("Aimbot", &UserSettings.Aimbot);
+			if (UserSettings.Aimbot) {
+				ImGui::Checkbox("Show Aimbot Fov", &UserSettings.ShowFov);
+				if (UserSettings.ShowFov) {
+					ImGui::SliderInt("Thickness Fov", &UserSettings.FovThickness, 0, 10);
+					ImGui::ColorEdit4("Fov Color", (float*)(&UserSettings.FovColor));
+				}
+				ImGui::SliderInt("Aimbot Fov", &UserSettings.AimbotFov, 1, 1920);
+				ImGui::Checkbox("Show Target", &UserSettings.ShowTarget);
+				if (UserSettings.ShowTarget)
+				{
+					ImGui::SliderInt("Thickness target line", &UserSettings.TargetThickness, 0, 10);
+					ImGui::ColorEdit4("Target color", (float*)(&UserSettings.TargetColor));
+				}
+				ImGui::SliderInt("Aimbot Sleep", &UserSettings.AimbotSleep, 1, 25);
+				ImGui::Separator();
+			}
 		}
 		if (UserSettings.MenuWindow == 2) {
 
@@ -239,13 +286,12 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 		ImGui::End();
 	}
 	if (hooked) {
-		if (UserSettings.ESP || UserSettings.DistanceEsp || UserSettings.ESP3d || UserSettings.SnapLine) {
+		if (UserSettings.ESP || UserSettings.DistanceEsp || UserSettings.ESP3d || UserSettings.SnapLine || UserSettings.FilledWidth) {
 			for (int i = 0; i < 254; i++) {
 				if (ents[i] != 0 && local != 0) {
-					Vector3 Lpos = local->Pos;
 					if (ents[i]->Check1 != 0) {
 						Vector3 pos = ents[i]->Pos;
-						if ((Lpos.Distance(pos) / 100) > 0.8f && (Lpos.Distance(pos) / 100) < UserSettings.EspDistance) {
+						if ((local->Pos.Distance(pos) / 100) > 0.8f && (local->Pos.Distance(pos) / 100) < UserSettings.EspDistance) {
 							Vector3 pos1 = ents[i]->Pos;
 							pos1.z += 64;
 							Vector3 pos2 = ents[i]->Pos;
@@ -273,11 +319,34 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 								}
 							}
 							if (UserSettings.DistanceEsp) {
-								sprintf_s(Distances, 50, "[%0.fm]", Lpos.Distance(pos) / 100);
+								sprintf_s(Distances, 50, "[%0.fm]", local->Pos.Distance(pos) / 100);
 								if (Posscreen.x > 0 && Posscreen.y > 0 && Posscreen.x < 1920 && Posscreen.y < 1080) {
 									DrawChar(Posscreen1, Distances, UserSettings.EnemyDistColor, 1);
 								}
 							}
+							if (UserSettings.FilledESP) {
+								if (Posscreen.x > 0 && Posscreen.y > 0 && Posscreen.x < 1920 && Posscreen.y < 1080) {
+									DrawFilledRect(Posscreen, heigth, heigth * UserSettings.FilledWidth, UserSettings.EnemyFilledColor);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		if (UserSettings.Aimbot) {
+			if (UserSettings.ShowFov) {
+				DrawCircle({ 1920 / 2, 1080 / 2 }, UserSettings.FovColor, UserSettings.AimbotFov, UserSettings.FovThickness);
+			}
+			if (UserSettings.ShowTarget) {
+				if (ents[closest] != 0 && local != 0) {
+					float Distance = local->Pos.Distance(ents[closest]->Pos) / 100;
+					if (Distance < UserSettings.EspDistance && Distance > 0.9f && ents[closest]->Check1 != 0) {
+						Vector3 pos = ents[closest]->Pos;
+						pos.z += 60;
+						Vector2 AimbottargetScreen = PosToScreen(pos);
+						if (AimbottargetScreen.Distance({ 1920 / 2, 1080 / 2 }) < UserSettings.AimbotFov) {
+							DrawLine({ 1920 / 2, 1080 / 2 }, AimbottargetScreen, UserSettings.TargetColor, UserSettings.TargetThickness);
 						}
 					}
 				}
