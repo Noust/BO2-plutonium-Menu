@@ -35,6 +35,8 @@ public:
 
 	float EspDistance = 50.0f;
 	bool Aimbot = false;
+	bool HeadTarget = false;
+	bool StomachTarget = true;
 	int AimbotFov = 1920;
 	bool ShowFov = false;
 	int FovThickness = 0;
@@ -42,5 +44,7 @@ public:
 	bool ShowTarget = false;
 	int TargetThickness = 0;
 	ImColor TargetColor = { 255,0,0 };
-	int AimbotSleep = 2;
+	bool FilledCircle = false;
+	ImColor FilledCircleColor = { 0,0,0,80 };
+	int AimbotSleep = 1;
 }UserSettings;

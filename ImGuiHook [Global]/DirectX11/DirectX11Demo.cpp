@@ -52,7 +52,7 @@ int FindClosestEnemy() {
 			float Distance = local->Pos.Distance(ents[i]->Pos) / 100; if (Distance > UserSettings.EspDistance || Distance < 0.9f) continue;
 			float Check = ents[i]->Check1; if (Check == 0) continue;
 			Vector3 pos = ents[i]->Pos;
-			pos.z += 60;
+			pos.z += 57;
 			Vector2 Posscreen = PosToScreen(pos);
 			Finish = Posscreen.Distance({ 1920 / 2, 1080 / 2 });
 			if (Finish < Closest) {
@@ -100,7 +100,10 @@ DWORD WINAPI Aimbot(HMODULE hMod) {
 					float Distance = local->Pos.Distance(ents[closest]->Pos) / 100;
 					if (Distance < UserSettings.EspDistance && Distance > 0.9f && ents[closest]->Check1 != 0) {
 						Vector3 pos = ents[closest]->Pos;
-						pos.z += 57;
+						if (UserSettings.HeadTarget)
+							pos.z += 57;
+						if (UserSettings.StomachTarget)
+							pos.z += 40;
 						Vector2 AimbottargetScreen = PosToScreen(pos);
 						if (AimbottargetScreen.Distance({ 1920 / 2, 1080 / 2 }) < UserSettings.AimbotFov) {
 							SetCursorPos(AimbottargetScreen.x, AimbottargetScreen.y);
@@ -285,10 +288,24 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 		if (UserSettings.MenuWindow == 1) {
 			ImGui::Checkbox("Aimbot", &UserSettings.Aimbot);
 			if (UserSettings.Aimbot) {
+				ImGui::Text("Target");
+				if (ImGui::Button("Head")) {
+					UserSettings.HeadTarget = true;
+					UserSettings.StomachTarget = false;
+				}
+				if (ImGui::Button("Stomach")) {
+					UserSettings.HeadTarget = false;
+					UserSettings.StomachTarget = true;
+				}
 				ImGui::Checkbox("Show Aimbot Fov", &UserSettings.ShowFov);
 				if (UserSettings.ShowFov) {
 					ImGui::SliderInt("Thickness Fov", &UserSettings.FovThickness, 0, 10);
 					ImGui::ColorEdit4("Fov Color", (float*)(&UserSettings.FovColor));
+					ImGui::Checkbox("Filled Circle", &UserSettings.FilledCircle);
+					if (UserSettings.FilledCircle) {
+						ImGui::ColorEdit4("Filled Circle Color", (float*)(&UserSettings.FilledCircleColor));
+					}
+					ImGui::Separator();
 				}
 				ImGui::SliderInt("Aimbot Fov", &UserSettings.AimbotFov, 1, 1920);
 				ImGui::Checkbox("Show Target", &UserSettings.ShowTarget);
@@ -296,8 +313,9 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 				{
 					ImGui::SliderInt("Thickness target line", &UserSettings.TargetThickness, 0, 10);
 					ImGui::ColorEdit4("Target color", (float*)(&UserSettings.TargetColor));
+					ImGui::Separator();
 				}
-				ImGui::SliderInt("Aimbot Sleep", &UserSettings.AimbotSleep, 1, 25);
+				ImGui::SliderInt("Aimbot Sleep", &UserSettings.AimbotSleep, 1, 100);
 				ImGui::Separator();
 			}
 		}
@@ -360,12 +378,18 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 			if (UserSettings.ShowFov) {
 				DrawCircle({ 1920 / 2, 1080 / 2 }, UserSettings.FovColor, UserSettings.AimbotFov, UserSettings.FovThickness);
 			}
+			if (UserSettings.FilledCircle) {
+				ImGui::GetBackgroundDrawList()->AddCircleFilled(ImVec2(1920 / 2, 1080 / 2), UserSettings.AimbotFov, UserSettings.FilledCircleColor, 0);
+			}
 			if (UserSettings.ShowTarget) {
 				if (ents[closest] != 0 && local != 0) {
 					float Distance = local->Pos.Distance(ents[closest]->Pos) / 100;
 					if (Distance < UserSettings.EspDistance && Distance > 0.9f && ents[closest]->Check1 != 0) {
 						Vector3 pos = ents[closest]->Pos;
-						pos.z += 57;
+						if (UserSettings.HeadTarget)
+							pos.z += 57;
+						if (UserSettings.StomachTarget)
+							pos.z += 40;
 						Vector2 AimbottargetScreen = PosToScreen(pos);
 						if (AimbottargetScreen.Distance({ 1920 / 2, 1080 / 2 }) < UserSettings.AimbotFov) {
 							DrawLine({ 1920 / 2, 1080 / 2 }, AimbottargetScreen, UserSettings.TargetColor, UserSettings.TargetThickness);
