@@ -377,9 +377,9 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 		if (UserSettings.Aimbot) {
 			if (UserSettings.ShowFov) {
 				DrawCircle({ 1920 / 2, 1080 / 2 }, UserSettings.FovColor, UserSettings.AimbotFov, UserSettings.FovThickness);
-			}
-			if (UserSettings.FilledCircle) {
-				ImGui::GetBackgroundDrawList()->AddCircleFilled(ImVec2(1920 / 2, 1080 / 2), UserSettings.AimbotFov, UserSettings.FilledCircleColor, 0);
+				if (UserSettings.FilledCircle) {
+					ImGui::GetBackgroundDrawList()->AddCircleFilled(ImVec2(1920 / 2, 1080 / 2), UserSettings.AimbotFov, UserSettings.FilledCircleColor, 0);
+				}
 			}
 			if (UserSettings.ShowTarget) {
 				if (ents[closest] != 0 && local != 0) {
