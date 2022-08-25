@@ -21,7 +21,7 @@ void Colors() {
 	style.ScrollbarSize = 14.0f;
 	style.GrabMinSize = 5.0f;
 	style.GrabRounding = 3.0f;
-	style.WindowMinSize = ImVec2(784, 377);
+	style.WindowMinSize = ImVec2(547, 347);
 	style.WindowTitleAlign = { 0.5,0.5f };
 
 	style.Colors[ImGuiCol_TitleBg] = ImColor(87, 35, 100);
@@ -205,24 +205,20 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 	ImGui::GetIO().MouseDrawCursor = ShowMenu;
 	if (ShowMenu == true) {
 		ImGui::Begin("Nova", 0, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-		ImGui::BeginChild("##leftside", ImVec2(150, ImGui::GetContentRegionAvail().y), true);
-		if (ImGui::Button("Visuals", ImVec2(ImGui::GetContentRegionAvail().x, 25))) {
+		ImGui::BeginChild("##leftside", ImVec2(ImGui::GetContentRegionAvail().x, 49), true);
+		if (ImGui::Button("Visuals", ImVec2(ImGui::GetWindowSize().x / 2.12f, 25))) {
 			UserSettings.MenuWindow = 0;
 		}
-		if (ImGui::Button("Weapon", ImVec2(ImGui::GetContentRegionAvail().x, 25))) {
+		ImGui::SameLine();
+		if (ImGui::Button("Weapon", ImVec2(ImGui::GetWindowSize().x / 2.12f, 25))) {
 			UserSettings.MenuWindow = 1;
 		}
-		if (ImGui::Button("Name", ImVec2(ImGui::GetContentRegionAvail().x, 25))) {
-			UserSettings.MenuWindow = 2;
-		}
 		ImGui::EndChild();
-		ImGui::SameLine();
 		ImGui::BeginChild("##rigth", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y), true);
 		if (UserSettings.MenuWindow == 0) {
 			ImGui::Checkbox("Snap Line Esp", &UserSettings.SnapLine);
 			if (UserSettings.SnapLine) {
-				ImGui::ColorEdit4("Enemy Snap Color", (float*)(&UserSettings.EnemySnapColor));
-				ImGui::ColorEdit4("Team Snap Color", (float*)(&UserSettings.PlayerSnapColor));
+				ImGui::ColorEdit4("Snap Color", (float*)(&UserSettings.EnemySnapColor));
 				ImGui::SliderInt("Snap thickness", &UserSettings.ThicknessSnap, 0, 10);
 				ImGui::Spacing();
 				ImGui::Spacing();
@@ -257,31 +253,35 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 			}
 			ImGui::Checkbox("Box ESP", &UserSettings.ESP);
 			if (UserSettings.ESP) {
-				ImGui::ColorEdit4("Enemies Box Color", (float*)(&UserSettings.EnemyBoxColor));
-				ImGui::ColorEdit4("Team Box Color", (float*)(&UserSettings.PlayerBoxColor));
+				ImGui::ColorEdit4("Box Color", (float*)(&UserSettings.EnemyBoxColor));
 				ImGui::SliderFloat("Box Width", &UserSettings.boxWidth, 0, 1);
 				ImGui::SliderInt("Box Thickness", &UserSettings.bocthickness, 0, 10);
 				ImGui::Separator();
 			}
 			ImGui::Checkbox("Distance ESP", &UserSettings.DistanceEsp);
 			if (UserSettings.DistanceEsp) {
-				ImGui::ColorEdit4("Enemies Distance Color", (float*)(&UserSettings.EnemyDistColor));
-				ImGui::ColorEdit4("Team Distance Color", (float*)(&UserSettings.PlayerDistColor));
+				ImGui::ColorEdit4("Distance Color", (float*)(&UserSettings.EnemyDistColor));
 				ImGui::Separator();
 			}
 			ImGui::Checkbox("3D Box ESP", &UserSettings.ESP3d);
 			if (UserSettings.ESP3d) {
-				ImGui::ColorEdit4("Enemies 3D Box Color", (float*)(&UserSettings.Enemy3dColor));
-				ImGui::ColorEdit4("Team 3D Box Color", (float*)(&UserSettings.Player3dColor));
+				ImGui::ColorEdit4("3D Box Color", (float*)(&UserSettings.Enemy3dColor));
 				ImGui::SliderInt("3D Box Thickness", &UserSettings.box3dthickness, 0, 10);
 				ImGui::Separator();
 			}
 			ImGui::Checkbox("Filled Box ESP", &UserSettings.FilledESP);
 			if (UserSettings.FilledESP) {
-				ImGui::ColorEdit4("Enemies Filled Box Color", (float*)(&UserSettings.EnemyFilledColor));
-				ImGui::ColorEdit4("Team Filled Box Color", (float*)(&UserSettings.PlayerFilledColor));
+				ImGui::ColorEdit4("Filled Box Color", (float*)(&UserSettings.EnemyFilledColor));
 				ImGui::SliderFloat("Filled Box Width", &UserSettings.FilledWidth, 0, 1);
 				ImGui::Separator();
+			}
+			ImGui::Checkbox("Night Mode", &UserSettings.nightmode);
+			if (UserSettings.nightmode) {
+				UserSettings.fullbrigthness = false;
+			}
+			ImGui::Checkbox("Full Brightness", &UserSettings.fullbrigthness);
+			if (UserSettings.fullbrigthness) {
+				UserSettings.nightmode = false;
 			}
 			ImGui::SliderFloat("ESP Distance", &UserSettings.EspDistance, 1, 80);
 		}
@@ -305,9 +305,9 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 					if (UserSettings.FilledCircle) {
 						ImGui::ColorEdit4("Filled Circle Color", (float*)(&UserSettings.FilledCircleColor));
 					}
-					ImGui::Separator();
 				}
 				ImGui::SliderInt("Aimbot Fov", &UserSettings.AimbotFov, 1, 1920);
+				ImGui::Separator();
 				ImGui::Checkbox("Show Target", &UserSettings.ShowTarget);
 				if (UserSettings.ShowTarget)
 				{
@@ -373,6 +373,12 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 					}
 				}
 			}
+		}
+		if (UserSettings.fullbrigthness) {
+			ImGui::GetBackgroundDrawList()->AddCircleFilled(ImVec2(1920 / 2, 1080 / 2), 1920, UserSettings.FilledCircleColorWhite, 0);
+		}
+		if (UserSettings.nightmode) {
+			ImGui::GetBackgroundDrawList()->AddCircleFilled(ImVec2(1920 / 2, 1080 / 2), 1920, UserSettings.FilledCircleColorBlack, 0);
 		}
 		if (UserSettings.Aimbot) {
 			if (UserSettings.ShowFov) {
