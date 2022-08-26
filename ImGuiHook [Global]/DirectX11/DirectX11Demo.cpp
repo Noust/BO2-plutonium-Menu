@@ -91,10 +91,14 @@ DWORD WINAPI InitiateHooks(HMODULE hMod) {
 	}
 	FreeLibraryAndExitThread(hMod, 0);
 }
+void shoot() {
+	mouse_event(MOUSEEVENTF_LEFTDOWN, 1920 / 2, 1080 / 2, 0, 0);
+	mouse_event(MOUSEEVENTF_LEFTUP, 1920 / 2, 1080 / 2, 0, 0);
+}
 
 DWORD WINAPI Aimbot(HMODULE hMod) {
 	while (!GetAsyncKeyState(VK_DELETE)) {
-		if (UserSettings.Aimbot) {
+		if (UserSettings.Aimbot && !ShowMenu) {
 			if (GetAsyncKeyState(VK_RBUTTON)) {
 				if (ents[closest] != 0 && local != 0) {
 					float Distance = local->Pos.Distance(ents[closest]->Pos) / 100;
