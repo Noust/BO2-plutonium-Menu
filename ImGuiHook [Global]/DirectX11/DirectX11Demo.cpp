@@ -6,6 +6,10 @@ bool alreadyther = false;
 char Distances[50];
 Vector2 SnapLineBegin = { 1920 / 2,1080 };
 int closest;
+Vector2 Diference;
+Vector2 Middle = { 1920 / 2, 1080 / 2 };
+Vector2 siii;
+Vector2 AimbottargetScreen;
 
 void Colors() {
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -84,8 +88,19 @@ DWORD WINAPI InitiateHooks(HMODULE hMod) {
 		}
 	}
 	while (!GetAsyncKeyState(VK_DELETE)) {
-		if (UserSettings.Aimbot) {
+		if (UserSettings.Aimbot && !ShowMenu) {
 			closest = FindClosestEnemy();
+			if (ents[closest] != 0 && local != 0) {
+				float Distance = local->Pos.Distance(ents[closest]->Pos) / 100;
+				if (Distance < UserSettings.EspDistance && Distance > 0.9f && ents[closest]->Check1 != 0) {
+					Vector3 pos = ents[closest]->Pos;
+					if (UserSettings.HeadTarget)
+						pos.z += 57;
+					if (UserSettings.StomachTarget)
+						pos.z += 40;
+					AimbottargetScreen = PosToScreen(pos);
+				}
+			}
 		}
 		Sleep(1);
 	}
@@ -99,24 +114,24 @@ void shoot() {
 DWORD WINAPI Aimbot(HMODULE hMod) {
 	while (!GetAsyncKeyState(VK_DELETE)) {
 		if (UserSettings.Aimbot && !ShowMenu) {
-			if (GetAsyncKeyState(VK_RBUTTON)) {
+			if (GetAsyncKeyState(VK_XBUTTON2) & 1) {
 				if (ents[closest] != 0 && local != 0) {
 					float Distance = local->Pos.Distance(ents[closest]->Pos) / 100;
 					if (Distance < UserSettings.EspDistance && Distance > 0.9f && ents[closest]->Check1 != 0) {
-						Vector3 pos = ents[closest]->Pos;
-						if (UserSettings.HeadTarget)
-							pos.z += 57;
-						if (UserSettings.StomachTarget)
-							pos.z += 40;
-						Vector2 AimbottargetScreen = PosToScreen(pos);
 						if (AimbottargetScreen.Distance({ 1920 / 2, 1080 / 2 }) < UserSettings.AimbotFov) {
 							SetCursorPos(AimbottargetScreen.x, AimbottargetScreen.y);
+							Sleep(3);
+							shoot();
+							SetCursorPos(siii.x, siii.y);
 						}
 					}
 				}
 			}
+			else {
+				Diference = AimbottargetScreen.Dif(Middle);
+				siii = Diference + Middle;
+			}
 		}
-		Sleep(UserSettings.AimbotSleep);
 	}
 	FreeLibraryAndExitThread(hMod, 0);
 }
@@ -395,12 +410,6 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 				if (ents[closest] != 0 && local != 0) {
 					float Distance = local->Pos.Distance(ents[closest]->Pos) / 100;
 					if (Distance < UserSettings.EspDistance && Distance > 0.9f && ents[closest]->Check1 != 0) {
-						Vector3 pos = ents[closest]->Pos;
-						if (UserSettings.HeadTarget)
-							pos.z += 57;
-						if (UserSettings.StomachTarget)
-							pos.z += 40;
-						Vector2 AimbottargetScreen = PosToScreen(pos);
 						if (AimbottargetScreen.Distance({ 1920 / 2, 1080 / 2 }) < UserSettings.AimbotFov) {
 							DrawLine({ 1920 / 2, 1080 / 2 }, AimbottargetScreen, UserSettings.TargetColor, UserSettings.TargetThickness);
 						}

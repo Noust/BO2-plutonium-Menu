@@ -19,6 +19,11 @@ struct Vector2 {
 	float Distance(Vector2 pos) {
 		return sqrt(pow(pos.x - x, 2) + pow(pos.y - y, 2));
 	}
+
+	Vector2 Dif(Vector2 pos) {
+		return { pos.x - x, pos.y - y };
+	}
+	
 };
 
 struct Vector3 {
