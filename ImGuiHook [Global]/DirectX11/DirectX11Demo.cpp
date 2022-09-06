@@ -10,6 +10,7 @@ Vector2 Diference;
 Vector2 Middle = { 1920 / 2, 1080 / 2 };
 Vector2 siii;
 Vector2 AimbottargetScreen;
+bool silent;
 
 void Colors() {
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -114,23 +115,26 @@ void shoot() {
 DWORD WINAPI Aimbot(HMODULE hMod) {
 	while (!GetAsyncKeyState(VK_DELETE)) {
 		if (UserSettings.Aimbot && !ShowMenu) {
-			if (GetAsyncKeyState(VK_XBUTTON2) & 1) {
+			if (GetAsyncKeyState(VK_XBUTTON2))
+				silent = true;
+			while (silent) {
 				if (ents[closest] != 0 && local != 0) {
 					float Distance = local->Pos.Distance(ents[closest]->Pos) / 100;
 					if (Distance < UserSettings.EspDistance && Distance > 0.9f && ents[closest]->Check1 != 0) {
 						if (AimbottargetScreen.Distance({ 1920 / 2, 1080 / 2 }) < UserSettings.AimbotFov) {
 							SetCursorPos(AimbottargetScreen.x, AimbottargetScreen.y);
-							Sleep(3);
+							Sleep(8);
 							shoot();
+							Sleep(1);
 							SetCursorPos(siii.x, siii.y);
+							Sleep(10);
+							silent = false;
 						}
 					}
 				}
 			}
-			else {
-				Diference = AimbottargetScreen.Dif(Middle);
-				siii = Diference + Middle;
-			}
+			Diference = AimbottargetScreen.Dif(Middle);
+			siii = Diference + Middle;
 		}
 	}
 	FreeLibraryAndExitThread(hMod, 0);
