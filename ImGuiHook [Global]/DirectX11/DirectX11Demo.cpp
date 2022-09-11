@@ -119,7 +119,7 @@ DWORD WINAPI SilentAimbot(HMODULE hMod) {
 				if (ents[closest] != 0 && local != 0) {
 					float Distance = local->Pos.Distance(ents[closest]->Pos) / 100;
 					if (Distance < UserSettings.EspDistance && Distance > 0.9f && ents[closest]->Check1 != 0) {
-						if (AimbottargetScreen.Distance({ 1920 / 2, 1080 / 2 }) < UserSettings.SAimbotFov) {
+						if (AimbottargetScreen.Distance({ 1920 / 2, 1080 / 2 }) < UserSettings.AimbotFov) {
 							silent = AimbottargetScreen - (Diference / 2);
 							SetCursorPos(silent.x, silent.y);
 							Sleep(3);
@@ -135,6 +135,25 @@ DWORD WINAPI SilentAimbot(HMODULE hMod) {
 				siii = (Diference + Middle) + (Diference / 2);
 			}
 		}
+	}
+	FreeLibraryAndExitThread(hMod, 0);
+}
+
+DWORD WINAPI Aimbot(HMODULE hMod) {
+	while (!GetAsyncKeyState(VK_DELETE)) {
+		if (UserSettings.Aimbot && !ShowMenu) {
+			if (GetAsyncKeyState(VK_RBUTTON)) {
+				if (ents[closest] != 0 && local != 0) {
+					float Distance = local->Pos.Distance(ents[closest]->Pos) / 100;
+					if (Distance < UserSettings.EspDistance && Distance > 0.9f && ents[closest]->Check1 != 0) {
+						if (AimbottargetScreen.Distance({ 1920 / 2, 1080 / 2 }) < UserSettings.AimbotFov) {
+							SetCursorPos(AimbottargetScreen.x, AimbottargetScreen.y);
+						}
+					}
+				}
+			}
+		}
+		Sleep(UserSettings.AimbotSleep);
 	}
 	FreeLibraryAndExitThread(hMod, 0);
 }
@@ -309,7 +328,12 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 		}
 		if (UserSettings.MenuWindow == 1) {
 			ImGui::Checkbox("Aimbot", &UserSettings.Aimbot);
-			if (UserSettings.Aimbot) {
+			ImGui::Checkbox("Silent Aim", &UserSettings.SAimbot);
+			if (UserSettings.SAimbot)
+				UserSettings.Aimbot = false;
+			if (UserSettings.Aimbot)
+				UserSettings.SAimbot = false;
+			if (UserSettings.Aimbot || UserSettings.SAimbot) {
 				ImGui::Text("Target");
 				if (ImGui::Button("Head")) {
 					UserSettings.HeadTarget = true;
@@ -319,7 +343,7 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 					UserSettings.HeadTarget = false;
 					UserSettings.StomachTarget = true;
 				}
-				ImGui::Checkbox("Show Aimbot Fov", &UserSettings.ShowFov);
+				ImGui::Checkbox("Show Fov", &UserSettings.ShowFov);
 				if (UserSettings.ShowFov) {
 					ImGui::SliderInt("Thickness Fov", &UserSettings.FovThickness, 0, 10);
 					ImGui::ColorEdit4("Fov Color", (float*)(&UserSettings.FovColor));
@@ -328,7 +352,7 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 						ImGui::ColorEdit4("Filled Circle Color", (float*)(&UserSettings.FilledCircleColor));
 					}
 				}
-				ImGui::SliderInt("Aimbot Fov", &UserSettings.AimbotFov, 1, 1920);
+				ImGui::SliderInt("Fov", &UserSettings.AimbotFov, 1, 1920);
 				ImGui::Separator();
 				ImGui::Checkbox("Show Target", &UserSettings.ShowTarget);
 				if (UserSettings.ShowTarget)
@@ -340,9 +364,6 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 				ImGui::SliderInt("Aimbot Sleep", &UserSettings.AimbotSleep, 1, 100);
 				ImGui::Separator();
 			}
-		}
-		if (UserSettings.MenuWindow == 2) {
-
 		}
 		ImGui::EndChild();
 		ImGui::End();
@@ -402,7 +423,7 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 		if (UserSettings.nightmode) {
 			ImGui::GetBackgroundDrawList()->AddCircleFilled(ImVec2(1920 / 2, 1080 / 2), 1920, UserSettings.FilledCircleColorBlack, 0);
 		}
-		if (UserSettings.Aimbot) {
+		if (UserSettings.Aimbot || UserSettings.SAimbot) {
 			if (UserSettings.ShowFov) {
 				DrawCircle({ 1920 / 2, 1080 / 2 }, UserSettings.FovColor, UserSettings.AimbotFov, UserSettings.FovThickness);
 				if (UserSettings.FilledCircle) {
@@ -420,9 +441,6 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 				}
 			}
 		}
-		char siu[50];
-		sprintf_s(siu, 50, "%f   %f", Diference.x, Diference.y);
-		DrawChar({ 100,100 }, siu, ImColor(255, 255, 255), 1);
 	}
 	ImGui::EndFrame();
 	ImGui::Render();
@@ -495,6 +513,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			StartThread(hModule, (LPTHREAD_START_ROUTINE)InitiateHooks);
 			StartThread(hModule, (LPTHREAD_START_ROUTINE)SetEntities);
 			StartThread(hModule, (LPTHREAD_START_ROUTINE)SilentAimbot);
+			StartThread(hModule, (LPTHREAD_START_ROUTINE)Aimbot);
 		}
 		break;
 	default:
