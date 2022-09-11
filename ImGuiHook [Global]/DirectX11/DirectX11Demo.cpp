@@ -9,8 +9,8 @@ int closest;
 Vector2 Diference;
 Vector2 Middle = { 1920 / 2, 1080 / 2 };
 Vector2 siii;
+Vector2 silent;
 Vector2 AimbottargetScreen;
-bool silent;
 
 void Colors() {
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -89,7 +89,7 @@ DWORD WINAPI InitiateHooks(HMODULE hMod) {
 		}
 	}
 	while (!GetAsyncKeyState(VK_DELETE)) {
-		if (UserSettings.Aimbot && !ShowMenu) {
+		if (UserSettings.Aimbot || UserSettings.SAimbot && !ShowMenu) {
 			closest = FindClosestEnemy();
 			if (ents[closest] != 0 && local != 0) {
 				float Distance = local->Pos.Distance(ents[closest]->Pos) / 100;
@@ -112,29 +112,28 @@ void shoot() {
 	mouse_event(MOUSEEVENTF_LEFTUP, 1920 / 2, 1080 / 2, 0, 0);
 }
 
-DWORD WINAPI Aimbot(HMODULE hMod) {
+DWORD WINAPI SilentAimbot(HMODULE hMod) {
 	while (!GetAsyncKeyState(VK_DELETE)) {
-		if (UserSettings.Aimbot && !ShowMenu) {
-			if (GetAsyncKeyState(VK_XBUTTON2))
-				silent = true;
-			while (silent) {
+		if (UserSettings.SAimbot && !ShowMenu) {
+			if (GetAsyncKeyState(VK_XBUTTON2)& 1) {
 				if (ents[closest] != 0 && local != 0) {
 					float Distance = local->Pos.Distance(ents[closest]->Pos) / 100;
 					if (Distance < UserSettings.EspDistance && Distance > 0.9f && ents[closest]->Check1 != 0) {
-						if (AimbottargetScreen.Distance({ 1920 / 2, 1080 / 2 }) < UserSettings.AimbotFov) {
-							SetCursorPos(AimbottargetScreen.x, AimbottargetScreen.y);
-							Sleep(8);
+						if (AimbottargetScreen.Distance({ 1920 / 2, 1080 / 2 }) < UserSettings.SAimbotFov) {
+							silent = AimbottargetScreen - (Diference / 2);
+							SetCursorPos(silent.x, silent.y);
+							Sleep(3);
 							shoot();
 							Sleep(1);
 							SetCursorPos(siii.x, siii.y);
-							Sleep(10);
-							silent = false;
 						}
 					}
 				}
 			}
-			Diference = AimbottargetScreen.Dif(Middle);
-			siii = Diference + Middle;
+			else {
+				Diference = AimbottargetScreen.Dif(Middle);
+				siii = (Diference + Middle) + (Diference / 2);
+			}
 		}
 	}
 	FreeLibraryAndExitThread(hMod, 0);
@@ -421,6 +420,9 @@ HRESULT APIENTRY MJPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT F
 				}
 			}
 		}
+		char siu[50];
+		sprintf_s(siu, 50, "%f   %f", Diference.x, Diference.y);
+		DrawChar({ 100,100 }, siu, ImColor(255, 255, 255), 1);
 	}
 	ImGui::EndFrame();
 	ImGui::Render();
@@ -492,7 +494,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
 			StartThread(hModule, (LPTHREAD_START_ROUTINE)MainThread);
 			StartThread(hModule, (LPTHREAD_START_ROUTINE)InitiateHooks);
 			StartThread(hModule, (LPTHREAD_START_ROUTINE)SetEntities);
-			StartThread(hModule, (LPTHREAD_START_ROUTINE)Aimbot);
+			StartThread(hModule, (LPTHREAD_START_ROUTINE)SilentAimbot);
 		}
 		break;
 	default:

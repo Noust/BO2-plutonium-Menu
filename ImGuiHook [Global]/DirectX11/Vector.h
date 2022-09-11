@@ -12,6 +12,9 @@ struct Vector2 {
 	Vector2 operator/(Vector2 V) {
 		return { x / V.x, y / V.y };
 	}
+	Vector2 operator/(float V) {
+		return { x / V, y / V };
+	}
 	Vector2 operator*(Vector2 V) {
 		return { x * V.x, y * V.y };
 	}

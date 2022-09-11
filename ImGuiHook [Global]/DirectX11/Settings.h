@@ -43,6 +43,19 @@ public:
 	ImColor FilledCircleColor = { 0,0,0,80 };
 	int AimbotSleep = 1;
 
+	bool SAimbot = false;
+	bool SHeadTarget = false;
+	bool SStomachTarget = true;
+	int SAimbotFov = 1920;
+	bool SShowFov = false;
+	int SFovThickness = 0;
+	ImColor SFovColor = { 255,255,255 };
+	bool SShowTarget = false;
+	int STargetThickness = 0;
+	ImColor STargetColor = { 255,0,0 };
+	bool SFilledCircle = false;
+	ImColor SFilledCircleColor = { 0,0,0,80 };
+
 	bool nightmode = false;
 	ImColor FilledCircleColorBlack = { 0,0,0,90 };
 	bool fullbrigthness = false;
